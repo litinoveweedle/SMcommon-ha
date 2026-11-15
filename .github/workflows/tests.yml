@@ -1,0 +1,57 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: litinoveweedle/SMioplus-ha
+          ref: 0cbf5221c570a01b268375ebfc8bb3cf8d357a84
+          path: .ci/SMioplus-ha
+          persist-credentials: false
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: litinoveweedle/SMmultiio-ha
+          ref: 2e2d94f77278bf9e8946bc6e479252bba86774a2
+          path: .ci/SMmultiio-ha
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.14"
+      - name: Install test dependencies
+        run: >-
+          python -m pip install build
+          'homeassistant==2026.11.1' 'pytest-homeassistant==2026.11.1'
+          'SMioplus>=1.0.0' 'SMmultiio>=1.0.0'
+      - name: Build and install wheel
+        run: |
+          python -m build --wheel
+          python -m pip install --no-deps dist/*.whl
+      - name: Test shared library and coexistence
+        env:
+          SMIOPLUS_REPO: ${{ github.workspace }}/.ci/SMioplus-ha
+          SMMULTIIO_REPO: ${{ github.workspace }}/.ci/SMmultiio-ha
+        run: >-
+          python -m pytest -p no:respx --asyncio-mode=auto
+          -o asyncio_default_fixture_loop_scope=function -q tests
+      - name: Test SMioplus with this wheel
+        working-directory: .ci/SMioplus-ha
+        run: >-
+          python -m pytest -p no:respx --asyncio-mode=auto
+          -o asyncio_default_fixture_loop_scope=function -q tests
+      - name: Test SMmultiio with this wheel
+        working-directory: .ci/SMmultiio-ha
+        run: >-
+          python -m pytest -p no:respx --asyncio-mode=auto
+          -o asyncio_default_fixture_loop_scope=function -q tests
