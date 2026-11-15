@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sequent-ha-common"
+version = "0.1.0"
+description = "Shared Home Assistant integration code for Sequent Microsystems cards"
+requires-python = ">=3.13"
+
+[tool.setuptools.packages.find]
+where = ["src"]
