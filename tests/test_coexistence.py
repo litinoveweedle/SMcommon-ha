@@ -6,7 +6,6 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-
 from homeassistant.helpers import entity_registry
 from homeassistant.helpers.entity_component import async_update_entity
 from homeassistant.loader import async_clear_custom_components_cache
@@ -40,7 +39,9 @@ async def test_two_cards_use_separate_apis_and_devices(hass, monkeypatch):
     io = importlib.import_module("custom_components.smioplus")
     multi = importlib.import_module("custom_components.smmultiio")
     states = {"io": 1, "multi": 0}
-    monkeypatch.setattr(io.CARD, "api", SimpleNamespace(getOptoCh=lambda stack, chan: states["io"]))
+    monkeypatch.setattr(
+        io.CARD, "api", SimpleNamespace(getOptoCh=lambda stack, chan: states["io"])
+    )
 
     class MultiAPI:
         def __init__(self, stack):
@@ -58,8 +59,12 @@ async def test_two_cards_use_separate_apis_and_devices(hass, monkeypatch):
     assert await async_setup_component(hass, "smmultiio", config)
     await hass.async_block_till_done()
     registry = entity_registry.async_get(hass)
-    io_id = registry.async_get_entity_id("binary_sensor", "smioplus", "binary_sensor.smioplus0_opto_1")
-    multi_id = registry.async_get_entity_id("binary_sensor", "smmultiio", "binary_sensor.smmultiio0_opto_in_1")
+    io_id = registry.async_get_entity_id(
+        "binary_sensor", "smioplus", "binary_sensor.smioplus0_opto_1"
+    )
+    multi_id = registry.async_get_entity_id(
+        "binary_sensor", "smmultiio", "binary_sensor.smmultiio0_opto_in_1"
+    )
     assert io_id and multi_id
     await async_update_entity(hass, io_id)
     await async_update_entity(hass, multi_id)

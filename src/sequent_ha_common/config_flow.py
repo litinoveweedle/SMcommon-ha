@@ -3,7 +3,6 @@
 import math
 
 import probatio as p
-
 from homeassistant import config_entries
 from homeassistant.helpers import selector
 
@@ -12,7 +11,13 @@ from .config_support import (
     available_entities,
     import_yaml_card,
 )
-from .const import CONF_ENTITIES, CONF_INTERVALS, CONF_STACK, CONF_UPDATE_INTERVAL, DEFAULT_INTERVAL
+from .const import (
+    CONF_ENTITIES,
+    CONF_INTERVALS,
+    CONF_STACK,
+    CONF_UPDATE_INTERVAL,
+    DEFAULT_INTERVAL,
+)
 
 
 def valid_interval(value):
@@ -34,11 +39,13 @@ class SequentConfigFlow(config_entries.ConfigFlow):
             return await self._create_card(import_yaml_card(self.card, user_input))
         return self.async_show_form(
             step_id="user",
-            data_schema=p.Schema({
-                p.Required(CONF_STACK, default=0): p.All(
-                    p.Coerce(int), p.Range(min=0, max=7)
-                )
-            }),
+            data_schema=p.Schema(
+                {
+                    p.Required(CONF_STACK, default=0): p.All(
+                        p.Coerce(int), p.Range(min=0, max=7)
+                    )
+                }
+            ),
         )
 
     async def async_step_import(self, user_input):
@@ -70,18 +77,22 @@ class SequentOptionsFlow(config_entries.OptionsFlowWithReload):
         )
         return self.async_show_form(
             step_id="init",
-            data_schema=p.Schema({
-                p.Required(CONF_ENTITIES, default=selected): selector.SelectSelector(
-                    selector.SelectSelectorConfig(
-                        options=[
-                            selector.SelectOptionDict(value=key, label=key)
-                            for key in available
-                        ],
-                        multiple=True,
-                        mode=selector.SelectSelectorMode.DROPDOWN,
+            data_schema=p.Schema(
+                {
+                    p.Required(
+                        CONF_ENTITIES, default=selected
+                    ): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=[
+                                selector.SelectOptionDict(value=key, label=key)
+                                for key in available
+                            ],
+                            multiple=True,
+                            mode=selector.SelectSelectorMode.DROPDOWN,
+                        )
                     )
-                )
-            }),
+                }
+            ),
         )
 
     async def async_step_intervals(self, user_input=None):
@@ -94,7 +105,8 @@ class SequentOptionsFlow(config_entries.OptionsFlowWithReload):
         imported = self.config_entry.data[CONF_ENTITIES]
         intervals = self.config_entry.options.get(CONF_INTERVALS, {})
         interval_entities = [
-            key for key in selected
+            key
+            for key in selected
             if available[key]["platform"] in ("sensor", "binary_sensor", "datetime")
         ]
         if not interval_entities:
@@ -103,13 +115,18 @@ class SequentOptionsFlow(config_entries.OptionsFlowWithReload):
             )
         return self.async_show_form(
             step_id="intervals",
-            data_schema=p.Schema({
-                p.Required(
-                    key,
-                    default=intervals.get(
-                        key, imported.get(key, {}).get(CONF_UPDATE_INTERVAL, DEFAULT_INTERVAL)
-                    ),
-                ): p.All(p.Coerce(float), valid_interval)
-                for key in interval_entities
-            }),
+            data_schema=p.Schema(
+                {
+                    p.Required(
+                        key,
+                        default=intervals.get(
+                            key,
+                            imported.get(key, {}).get(
+                                CONF_UPDATE_INTERVAL, DEFAULT_INTERVAL
+                            ),
+                        ),
+                    ): p.All(p.Coerce(float), valid_interval)
+                    for key in interval_entities
+                }
+            ),
         )

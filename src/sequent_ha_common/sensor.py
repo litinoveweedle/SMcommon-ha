@@ -1,6 +1,6 @@
 DEFAULT_ICONS = {
-        "on": "mdi:numeric",
-        "off": "mdi:numeric-0",
+    "on": "mdi:numeric",
+    "off": "mdi:numeric-0",
 }
 
 import inspect
@@ -15,6 +15,7 @@ from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.event import async_track_time_interval
 
 from . import Card
+from .config_support import async_setup_entities
 from .const import (
     CONF_CHAN,
     CONF_NAME,
@@ -22,18 +23,24 @@ from .const import (
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
 )
-from .config_support import async_setup_entities
 
 _LOGGER = logging.getLogger(__name__)
+
 
 async def async_setup_entry(hass, entry, async_add_entities, card: Card):
     def create(config):
         return Sensor(
-            hass=hass, name=config[CONF_NAME], stack=config[CONF_STACK],
-            type=config[CONF_TYPE], chan=config[CONF_CHAN],
-            update_interval=config.get(CONF_UPDATE_INTERVAL, 30), card=card,
+            hass=hass,
+            name=config[CONF_NAME],
+            stack=config[CONF_STACK],
+            type=config[CONF_TYPE],
+            chan=config[CONF_CHAN],
+            update_interval=config.get(CONF_UPDATE_INTERVAL, 30),
+            card=card,
         )
+
     await async_setup_entities(hass, entry, async_add_entities, "sensor", create, card)
+
 
 class Sensor(SensorEntity):
     _attr_should_poll = False
@@ -42,13 +49,15 @@ class Sensor(SensorEntity):
         self._card = card
         sm_map = card.entity_map["sensor"]
         generated_name = card.domain + str(stack) + "_" + type + "_" + str(chan)
-        self._attr_unique_id = generate_entity_id("sensor.{}", generated_name, current_ids=[])
+        self._attr_unique_id = generate_entity_id(
+            "sensor.{}", generated_name, current_ids=[]
+        )
         self._attr_name = name or generated_name
         self._stack = int(stack)
         self._type = type
         self._chan = int(chan)
         self._update_interval = float(update_interval)
-        self._short_timeout = .05
+        self._short_timeout = 0.05
         self._icons = DEFAULT_ICONS | sm_map[self._type].get("icon", {})
         self._attr_icon = self._icons["off"]
         self._attr_native_unit_of_measurement = sm_map[self._type].get("uom", "")
@@ -66,18 +75,24 @@ class Sensor(SensorEntity):
             self._SM_get = getattr(self._SM, com["get"])
             ### Make API compatible if channel is not used (_)
             if len(signature(self._SM_get).parameters) == 0:
+
                 def _aux2_SM_get(self, _):
                     return getattr(self, com["get"])()
+
                 self._SM_get = types.MethodType(_aux2_SM_get, self._SM)
         else:
             _SM_get = getattr(self._SM, com["get"])
             if len(signature(_SM_get).parameters) == 1:
+
                 def _aux3_SM_get(_, *args):
                     return _SM_get(self._stack, *args)
+
                 self._SM_get = _aux3_SM_get
             else:
+
                 def _aux_SM_get(*args):
                     return _SM_get(self._stack, *args)
+
                 self._SM_get = _aux_SM_get
 
     async def async_added_to_hass(self):
@@ -98,7 +113,13 @@ class Sensor(SensorEntity):
         try:
             self._attr_native_value = self._SM_get(self._chan)
         except Exception as ex:
-            _LOGGER.error(self._card.domain + " %s update() failed, %s, %s, %s", self._type, ex, str(self._stack), str(self._chan))
+            _LOGGER.error(
+                self._card.domain + " %s update() failed, %s, %s, %s",
+                self._type,
+                ex,
+                str(self._stack),
+                str(self._chan),
+            )
             return
         if self._attr_native_value != 0:
             self._attr_icon = self._icons["on"]

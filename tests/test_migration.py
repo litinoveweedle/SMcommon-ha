@@ -3,7 +3,6 @@
 from types import SimpleNamespace
 
 import pytest
-
 from homeassistant.exceptions import ConfigEntryError
 from homeassistant.helpers import entity_registry as er
 
@@ -33,8 +32,11 @@ async def test_legacy_domain_conflict_does_not_migrate_any_entries(hass, card):
 async def test_ambiguous_suffixed_ids_do_not_create_or_modify_entities(hass, card):
     registry = er.async_get(hass)
     config = {
-        "platform": "sensor", "name": "test0_temperature_1",
-        "stack": 0, "type": "temperature", "chan": 1,
+        "platform": "sensor",
+        "name": "test0_temperature_1",
+        "stack": 0,
+        "type": "temperature",
+        "chan": 1,
     }
     base = "sensor.test_card0_temperature_1"
     first = registry.async_get_or_create(
@@ -48,7 +50,12 @@ async def test_ambiguous_suffixed_ids_do_not_create_or_modify_entities(hass, car
 
     with pytest.raises(ConfigEntryError, match="Ambiguous legacy entity"):
         await async_setup_entities(
-            hass, entry, created.extend, "sensor", lambda _: pytest.fail("factory called"), card
+            hass,
+            entry,
+            created.extend,
+            "sensor",
+            lambda _: pytest.fail("factory called"),
+            card,
         )
 
     assert not created

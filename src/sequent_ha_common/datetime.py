@@ -20,12 +20,17 @@ DEFAULT_ICONS = {"on": "mdi:clock", "off": "mdi:clock-alert"}
 async def async_setup_entry(hass, entry, async_add_entities, card: Card):
     def create(config):
         return CardDateTime(
-            name=config[CONF_NAME], stack=config[CONF_STACK],
-            type=config[CONF_TYPE], chan=config[CONF_CHAN],
-            update_interval=config.get(CONF_UPDATE_INTERVAL, 30), card=card,
+            name=config[CONF_NAME],
+            stack=config[CONF_STACK],
+            type=config[CONF_TYPE],
+            chan=config[CONF_CHAN],
+            update_interval=config.get(CONF_UPDATE_INTERVAL, 30),
+            card=card,
         )
 
-    await async_setup_entities(hass, entry, async_add_entities, "datetime", create, card)
+    await async_setup_entities(
+        hass, entry, async_add_entities, "datetime", create, card
+    )
 
 
 class CardDateTime(DateTimeEntity):
@@ -40,7 +45,9 @@ class CardDateTime(DateTimeEntity):
         self._chan = int(chan)
         self._update_interval = float(update_interval)
         generated_name = card.domain + str(stack) + "_" + type + "_" + str(chan)
-        self._attr_unique_id = generate_entity_id("datetime.{}", generated_name, current_ids=[])
+        self._attr_unique_id = generate_entity_id(
+            "datetime.{}", generated_name, current_ids=[]
+        )
         self._attr_name = name or generated_name
         metadata = card.entity_map["datetime"][type]
         self._icons = DEFAULT_ICONS | metadata.get("icon", {})
@@ -63,14 +70,20 @@ class CardDateTime(DateTimeEntity):
             if (
                 not isinstance(value, (tuple, list))
                 or len(value) != 6
-                or any(not isinstance(part, int) or isinstance(part, bool) for part in value)
+                or any(
+                    not isinstance(part, int) or isinstance(part, bool)
+                    for part in value
+                )
             ):
                 raise ValueError(f"expected six integer fields, got {value!r}")
             return datetime(*value, tzinfo=timezone.utc)
         except (TypeError, ValueError, OverflowError) as err:
             _LOGGER.error(
                 "%s %s invalid RTC reading for stack %s: %s",
-                self._card.domain, self._type, self._stack, err,
+                self._card.domain,
+                self._type,
+                self._stack,
+                err,
             )
             return None
 
@@ -92,7 +105,10 @@ class CardDateTime(DateTimeEntity):
         except OSError as err:
             _LOGGER.error(
                 "%s %s RTC read failed for stack %s: %s",
-                self._card.domain, self._type, self._stack, err,
+                self._card.domain,
+                self._type,
+                self._stack,
+                err,
             )
             self._attr_native_value = None
         self._attr_icon = self._icons["on" if self._attr_native_value else "off"]
@@ -102,8 +118,12 @@ class CardDateTime(DateTimeEntity):
             raise ValueError("RTC datetime must include a time zone")
         utc_value = value.astimezone(timezone.utc).replace(microsecond=0)
         self._set_rtc(
-            utc_value.year, utc_value.month, utc_value.day,
-            utc_value.hour, utc_value.minute, utc_value.second,
+            utc_value.year,
+            utc_value.month,
+            utc_value.day,
+            utc_value.hour,
+            utc_value.minute,
+            utc_value.second,
         )
         self._attr_native_value = utc_value
         self._attr_icon = self._icons["on"]

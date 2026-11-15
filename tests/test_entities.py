@@ -2,9 +2,14 @@
 
 import logging
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
 import pytest
+from homeassistant.components.select import DATA_COMPONENT
+from homeassistant.helpers import entity_registry
+from homeassistant.helpers.entity_component import async_update_entity
+from homeassistant.setup import async_setup_component
 
 from sequent_ha_common import Card
 from sequent_ha_common.binary_sensor import BinarySensor
@@ -12,6 +17,8 @@ from sequent_ha_common.button import Button
 from sequent_ha_common.const import COM_NOGET
 from sequent_ha_common.datetime import CardDateTime
 from sequent_ha_common.number import Number, Number_NOGET
+from sequent_ha_common.select import Select
+from sequent_ha_common.select import async_setup_entry as setup_select
 from sequent_ha_common.sensor import Sensor
 from sequent_ha_common.switch import Switch
 
@@ -29,6 +36,13 @@ def card_and_calls(request, monkeypatch):
 
         def set(self, stack, channel, value):
             calls.append(("set", stack, channel, value))
+
+        def get_global(self, stack):
+            calls.append(("get_global", stack))
+            return reading["value"]
+
+        def set_global(self, stack, value):
+            calls.append(("set_global", stack, value))
 
         def reset(self, stack, channel):
             calls.append(("reset", stack, channel))
@@ -54,6 +68,13 @@ def card_and_calls(request, monkeypatch):
         def set(self, channel, value):
             calls.append(("set", self.stack, channel, value))
 
+        def get_global(self):
+            calls.append(("get_global", self.stack))
+            return reading["value"]
+
+        def set_global(self, value):
+            calls.append(("set_global", self.stack, value))
+
         def reset(self, channel):
             calls.append(("reset", self.stack, channel))
 
@@ -76,6 +97,16 @@ def card_and_calls(request, monkeypatch):
         "datetime": {"rtc": {"com": {"get": "get_rtc", "set": "set_rtc"}}},
         "sensor": {"adc": {"com": {"get": "get"}}},
         "switch": {"relay": {"com": {"get": "get", "set": "set"}}},
+        "select": {
+            "type": {
+                "com": {"get": "get", "set": "set"},
+                "option_map": {"B": 0, "K": 3},
+            },
+            "global": {
+                "com": {"get": "get_global", "set": "set_global"},
+                "option_map": {"B": 0, "K": 3},
+            },
+        },
         "number": {
             "dac": {
                 "com": {"get": "get", "set": "set"},
@@ -92,7 +123,11 @@ def card_and_calls(request, monkeypatch):
         },
     }
     api = ModuleAPI() if request.param == "module" else ClassAPI
-    return Card("test_card", "TestCard", "test", "Test card", entity_map, api), calls, reading
+    return (
+        Card("test_card", "TestCard", "test", "Test card", entity_map, api),
+        calls,
+        reading,
+    )
 
 
 def test_button_calls_card_api_and_preserves_identity(card_and_calls):
@@ -134,7 +169,9 @@ def test_rtc_reads_utc_and_only_writes_when_explicitly_set(card_and_calls):
     entity.update()
     assert calls == [("get_rtc", 2), ("get_rtc", 2)]
 
-    entity.set_value(datetime(2026, 11, 15, 13, 30, 1, 999, tzinfo=timezone(timedelta(hours=1))))
+    entity.set_value(
+        datetime(2026, 11, 15, 13, 30, 1, 999, tzinfo=timezone(timedelta(hours=1)))
+    )
     assert calls[-1] == ("set_rtc", 2, 2026, 11, 15, 12, 30, 1)
     assert entity.native_value == datetime(2026, 11, 15, 12, 30, 1, tzinfo=timezone.utc)
     with pytest.raises(ValueError, match="time zone"):
@@ -235,6 +272,141 @@ def test_write_only_number_does_not_require_a_getter(card_and_calls):
     entity.update()
     assert entity.native_value == 4
     assert calls == [("set", 2, 3, 4)]
+
+
+@pytest.mark.parametrize("kind", ["type", "global"])
+def test_select_reads_and_writes_card_options(card_and_calls, kind):
+    card, calls, reading = card_and_calls
+    entity = Select(None, 2, kind, 3, card)
+    assert entity.unique_id == f"select.test_card2_{kind}_3"
+    assert entity.name == f"test_card2_{kind}_3"
+    assert entity.options == ["B", "K"]
+    assert entity.current_option is None
+    reading["value"] = 3
+    entity.update()
+    assert entity.current_option == "K"
+    entity.select_option("B")
+    assert entity.current_option == "B"
+    if kind == "type":
+        assert calls == [("get", 2, 3), ("set", 2, 3, 0)]
+    else:
+        assert calls == [("get_global", 2), ("set_global", 2, 0)]
+
+
+def test_select_invalid_reading_and_io_failures(card_and_calls, caplog):
+    card, calls, reading = card_and_calls
+    entity = Select("thermocouple", 2, "type", 3, card)
+    entity.update()
+    assert entity.current_option == "B"
+    for value in (99, None, []):
+        reading["value"] = value
+        entity.update()
+        assert entity.current_option is None
+    assert "invalid reading 99" in caplog.text
+    assert "invalid reading None" in caplog.text
+    assert "invalid reading []" in caplog.text
+    reading["value"] = 3
+    entity.update()
+    assert entity.current_option == "K"
+
+    def fail(*_args):
+        raise OSError("I2C unavailable")
+
+    entity._get = fail
+    entity.update()
+    assert entity.current_option is None
+    assert "I2C unavailable" in caplog.text
+    entity._get = lambda _channel: 3
+    entity.update()
+    entity._set = fail
+    with pytest.raises(OSError, match="I2C unavailable"):
+        entity.select_option("B")
+    assert entity.current_option == "K"
+    with pytest.raises(ValueError, match="Invalid option"):
+        entity.select_option("invalid")
+    assert not any(call[0] == "set" for call in calls)
+
+
+@pytest.mark.parametrize(
+    ("option_map", "message"),
+    [({"B": 0, "K": 0}, "duplicate option values"), ({}, "non-empty string options")],
+)
+def test_select_rejects_invalid_option_mapping(card_and_calls, option_map, message):
+    card, _, _ = card_and_calls
+    card.entity_map["select"]["type"]["option_map"] = option_map
+    with pytest.raises(ValueError, match=message):
+        Select(None, 2, "type", 3, card)
+
+
+async def test_select_setup_and_home_assistant_service(hass, monkeypatch):
+    monkeypatch.setattr("time.sleep", lambda _: None)
+    reading = {"value": 0}
+
+    class API:
+        def __init__(self, stack):
+            assert stack == 2
+
+        def get(self, channel):
+            assert channel == 3
+            return reading["value"]
+
+        def set(self, channel, value):
+            assert channel == 3
+            reading["value"] = value
+
+    card = Card(
+        "test_card",
+        "TestCard",
+        "test",
+        "Test card",
+        {
+            "select": {
+                "type": {
+                    "com": {"get": "get", "set": "set"},
+                    "option_map": {"B": 0, "K": 3},
+                }
+            },
+        },
+        API,
+    )
+    entry = SimpleNamespace(
+        domain=card.domain,
+        entry_id="test",
+        runtime_data=[
+            {
+                "platform": "select",
+                "name": "thermocouple",
+                "stack": 2,
+                "type": "type",
+                "chan": 3,
+            }
+        ],
+    )
+    registry = entity_registry.async_get(hass)
+    registry.async_get_or_create(
+        "select",
+        card.domain,
+        "select.test_card2_type_3_2",
+        original_name="thermocouple",
+    )
+    entities = []
+    await setup_select(hass, entry, entities.extend, card)
+    assert len(entities) == 1
+    assert entities[0].unique_id == "select.test_card2_type_3_2"
+    assert entities[0].device_info["identifiers"] == {("test_card", "2")}
+    assert await async_setup_component(hass, "select", {})
+    await hass.data[DATA_COMPONENT].async_add_entities(entities)
+    entity_id = entities[0].entity_id
+    await async_update_entity(hass, entity_id)
+    assert hass.states.get(entity_id).state == "B"
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {"entity_id": entity_id, "option": "K"},
+        blocking=True,
+    )
+    assert reading["value"] == 3
+    assert hass.states.get(entity_id).state == "K"
 
 
 def test_update_error_is_logged(card_and_calls, caplog):

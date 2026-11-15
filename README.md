@@ -34,20 +34,51 @@ SMIOPLUS_REPO=/path/to/SMioplus-ha SMMULTIIO_REPO=/path/to/SMmultiio-ha \
 The coexistence test requires both checkout paths; it is skipped if neither is
 set. Tests simulate hardware and do not require a card. CI builds the wheel and
 tests it against pinned commits of both card integrations, using the tests
-present at those commits. Each card's CI similarly builds a pinned commit of
-this library. Update these checkout refs when coordinating releases or
-integration changes; the card workflows also check the built wheel against
-their manifest dependency pins.
+present at those commits. Update these checkout refs when coordinating releases
+or integration changes. Each card's CI installs the published library from
+PyPI using its manifest dependency pin.
 
-The integrations currently pin `sequent-ha-common==0.1.0`. Publish that
-version to PyPI before releasing integrations that require it; otherwise
-Home Assistant cannot install the dependency. When releasing a newer version,
-update and test the pins in both integrations together so they can coexist in
-the same Home Assistant installation.
+The integrations currently pin `sequent-ha-common==0.0.1`. Publish a new
+version to PyPI before updating their pins; otherwise Home Assistant cannot
+install the dependency. Update and test both pins together so the integrations
+can coexist in the same Home Assistant installation.
 
 The shared datetime platform treats card RTC fields as UTC. It reads the RTC
 periodically but never synchronizes it automatically; use Home Assistant's
 `datetime.set_value` action or an automation to set it.
+
+### Select entities
+
+For a card with selectable settings, add a `select` section to its entity map:
+
+```python
+"select": {
+    "type": {
+        "chan_no": 8,
+        "com": {"get": "get_sensor_type", "set": "set_sensor_type"},
+        "option_map": {"B": 0, "K": 3},
+    },
+},
+```
+
+Option labels must be non-empty strings and their driver values must be unique
+and hashable. The getter returns a mapped value; the setter accepts one. Both
+module APIs (stack argument) and class APIs (constructed with a stack) are
+supported, with or without a channel argument. Invalid readings are logged and
+shown as unknown; Home Assistant polls the entity for changes.
+
+The card integration must provide its own `select.py` platform wrapper, as with
+the other platforms:
+
+```python
+from sequent_ha_common.select import async_setup_entry as shared_setup
+from . import CARD
+
+async def async_setup_entry(hass, entry, async_add_entities):
+    await shared_setup(hass, entry, async_add_entities, CARD)
+```
+
+Publish a new library version before requiring select support from PyPI.
 
 ### Publishing a release
 

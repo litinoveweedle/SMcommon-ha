@@ -19,8 +19,11 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass, entry, async_add_entities, card: Card):
     def create(config):
         return Button(
-            name=config[CONF_NAME], stack=config[CONF_STACK],
-            type=config[CONF_TYPE], chan=config[CONF_CHAN], card=card,
+            name=config[CONF_NAME],
+            stack=config[CONF_STACK],
+            type=config[CONF_TYPE],
+            chan=config[CONF_CHAN],
+            card=card,
         )
 
     await async_setup_entities(hass, entry, async_add_entities, "button", create, card)

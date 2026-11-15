@@ -18,18 +18,33 @@ _LOGGER = logging.getLogger(__name__)
 
 def config_schema(card: Card):
     """Allow legacy YAML to be imported once."""
-    return vol.Schema({
-        vol.Optional(card.domain): vol.Schema(vol.Any(None, [vol.Schema({
-            vol.Optional(CONF_STACK, default="0"): cv.string,
-        }, extra=vol.ALLOW_EXTRA)], {}))
-    }, extra=vol.ALLOW_EXTRA)
+    return vol.Schema(
+        {
+            vol.Optional(card.domain): vol.Schema(
+                vol.Any(
+                    None,
+                    [
+                        vol.Schema(
+                            {
+                                vol.Optional(CONF_STACK, default="0"): cv.string,
+                            },
+                            extra=vol.ALLOW_EXTRA,
+                        )
+                    ],
+                    {},
+                )
+            )
+        },
+        extra=vol.ALLOW_EXTRA,
+    )
 
 
 async def async_setup(hass, config, card: Card):
     """Migrate legacy registry entries and import YAML configuration."""
     registry = er.async_get(hass)
     legacy_entities = [
-        entry for entry in registry.entities.values()
+        entry
+        for entry in registry.entities.values()
         if entry.platform == card.legacy_domain
     ]
     for entry in legacy_entities:
@@ -45,8 +60,12 @@ async def async_setup(hass, config, card: Card):
         ir.async_delete_issue(hass, card.domain, "remove_yaml")
         return True
     ir.async_create_issue(
-        hass, card.domain, "remove_yaml", is_fixable=False,
-        severity=ir.IssueSeverity.WARNING, translation_key="remove_yaml",
+        hass,
+        card.domain,
+        "remove_yaml",
+        is_fixable=False,
+        severity=ir.IssueSeverity.WARNING,
+        translation_key="remove_yaml",
     )
     for config_card in config[card.domain] or [{}]:
         try:
@@ -54,11 +73,15 @@ async def async_setup(hass, config, card: Card):
             if not 0 <= imported[CONF_STACK] <= 7:
                 raise ValueError("stack must be between 0 and 7")
         except (TypeError, ValueError) as err:
-            _LOGGER.error("Cannot import %s YAML card configuration: %s", card.domain, err)
+            _LOGGER.error(
+                "Cannot import %s YAML card configuration: %s", card.domain, err
+            )
             continue
         hass.async_create_task(
             hass.config_entries.flow.async_init(
-                card.domain, context={"source": config_entries.SOURCE_IMPORT}, data=imported
+                card.domain,
+                context={"source": config_entries.SOURCE_IMPORT},
+                data=imported,
             )
         )
     return True
@@ -80,4 +103,6 @@ async def async_setup_entry(hass, entry, card: Card):
 
 async def async_unload_entry(hass, entry, card: Card):
     """Unload the card and its platforms."""
-    return await hass.config_entries.async_unload_platforms(entry, list(card.entity_map))
+    return await hass.config_entries.async_unload_platforms(
+        entry, list(card.entity_map)
+    )

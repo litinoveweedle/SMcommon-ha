@@ -12,12 +12,12 @@ from .const import (
     CONF_CHAN,
     CONF_CHAN_RANGE,
     CONF_CHANNELS,
+    CONF_ENTITIES,
+    CONF_INTERVALS,
     CONF_NAME,
     CONF_STACK,
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
-    CONF_ENTITIES,
-    CONF_INTERVALS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -111,7 +111,9 @@ def entry_entities(card: Card, entry):
     return entities
 
 
-async def async_setup_entities(hass, entry, async_add_entities, platform, factory, card: Card):
+async def async_setup_entities(
+    hass, entry, async_add_entities, platform, factory, card: Card
+):
     """Create one platform's entities without blocking the event loop."""
     configs = [item for item in entry.runtime_data if item["platform"] == platform]
     registry = er.async_get(hass)
@@ -125,15 +127,19 @@ async def async_setup_entities(hass, entry, async_add_entities, platform, factor
         unique_id = base_id
         if not registry.async_get_entity_id(platform, card.domain, base_id):
             matches = [
-                item.unique_id for item in registry.entities.values()
-                if item.domain == platform and item.platform == card.domain
+                item.unique_id
+                for item in registry.entities.values()
+                if item.domain == platform
+                and item.platform == card.domain
                 and item.config_entry_id in (None, entry.entry_id)
                 and item.original_name == config[CONF_NAME]
                 and item.unique_id.startswith(base_id + "_")
-                and item.unique_id[len(base_id) + 1:].isdigit()
+                and item.unique_id[len(base_id) + 1 :].isdigit()
             ]
             if len(matches) > 1:
-                raise ConfigEntryError(f"Ambiguous legacy entity for {config[CONF_NAME]}")
+                raise ConfigEntryError(
+                    f"Ambiguous legacy entity for {config[CONF_NAME]}"
+                )
             if matches:
                 unique_id = matches[0]
         try:
