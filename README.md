@@ -38,9 +38,9 @@ present at those commits. Update these checkout refs when coordinating releases
 or integration changes. Each card's CI installs the published library from
 PyPI using its manifest dependency pin.
 
-The integrations currently pin `sequent-ha-common==0.0.1`. Publish a new
-version to PyPI before updating their pins; otherwise Home Assistant cannot
-install the dependency. Update and test both pins together so the integrations
+The integrations pin `sequent-ha-common==0.0.2`. Publish this version to PyPI
+before deploying the integrations; otherwise Home Assistant cannot install the
+dependency. Update and test all installed integrations' pins together so they
 can coexist in the same Home Assistant installation.
 
 The shared datetime platform treats card RTC fields as UTC. It reads the RTC
@@ -102,4 +102,4 @@ environment's configured approvals. A pending publisher does not reserve the
 project name before the first successful upload.
 
 PyPI does not allow replacing an uploaded release file. For a subsequent fix,
-publish a new version and update both integrations' pins together.
+publish a new version and update the integrations' pins together.
