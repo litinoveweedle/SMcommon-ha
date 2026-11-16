@@ -40,10 +40,11 @@ wheel under development. Moving branch heads make results non-reproducible
 unless the checkout commits are recorded. Each card's own CI installs the
 published library from PyPI using its manifest dependency pin.
 
-The integrations pin `SMcommonHA>=0.0.2`. Publish this version to PyPI
-before deploying the integrations; otherwise Home Assistant cannot install the
-dependency. Update and test all installed integrations' pins together so they
-can coexist in the same Home Assistant installation.
+The integrations require `SMcommonHA>=0.0.3` from PyPI. Publish and verify
+any newer required version before releasing the integrations; otherwise Home
+Assistant cannot install the dependency. Update and test all installed
+integrations' requirements together so they can coexist in the same Home
+Assistant installation.
 
 The shared datetime platform treats card RTC fields as UTC. It reads the RTC
 periodically but never synchronizes it automatically; use Home Assistant's
