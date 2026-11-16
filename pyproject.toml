@@ -3,8 +3,8 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sequent-ha-common"
-version = "0.0.2"
+name = "SMcommonHA"
+version = "0.0.3"
 description = "Shared Home Assistant integration code for Sequent Microsystems cards"
 requires-python = ">=3.13"
 

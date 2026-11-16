@@ -11,16 +11,16 @@ from homeassistant.helpers import entity_registry
 from homeassistant.helpers.entity_component import async_update_entity
 from homeassistant.setup import async_setup_component
 
-from sequent_ha_common import Card
-from sequent_ha_common.binary_sensor import BinarySensor
-from sequent_ha_common.button import Button
-from sequent_ha_common.const import COM_NOGET
-from sequent_ha_common.datetime import CardDateTime
-from sequent_ha_common.number import Number, Number_NOGET
-from sequent_ha_common.select import Select
-from sequent_ha_common.select import async_setup_entry as setup_select
-from sequent_ha_common.sensor import Sensor
-from sequent_ha_common.switch import Switch
+from SMcommonHA import Card
+from SMcommonHA.binary_sensor import BinarySensor
+from SMcommonHA.button import Button
+from SMcommonHA.const import COM_NOGET
+from SMcommonHA.datetime import CardDateTime
+from SMcommonHA.number import Number, Number_NOGET
+from SMcommonHA.select import Select
+from SMcommonHA.select import async_setup_entry as setup_select
+from SMcommonHA.sensor import Sensor
+from SMcommonHA.switch import Switch
 
 
 @pytest.fixture(params=["module", "class"])

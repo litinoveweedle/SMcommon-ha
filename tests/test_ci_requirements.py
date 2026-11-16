@@ -28,7 +28,7 @@ def test_requires_single_manifest_and_shared_dependency(tmp_path):
     manifest = tmp_path / "custom_components" / "card" / "manifest.json"
     manifest.parent.mkdir(parents=True)
     manifest.write_text(json.dumps({"requirements": ["SomeDriver>=1.0"]}), encoding="utf-8")
-    with pytest.raises(ValueError, match="does not require sequent-ha-common"):
+    with pytest.raises(ValueError, match="does not require SMcommonHA"):
         install_card_requirements.card_requirements(tmp_path)
     extra = tmp_path / "custom_components" / "other" / "manifest.json"
     extra.parent.mkdir()

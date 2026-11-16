@@ -19,12 +19,12 @@ def card_requirements(repo: Path) -> list[str]:
     drivers = []
     has_common = False
     for requirement in requirements:
-        if canonicalize_name(Requirement(requirement).name) == "sequent-ha-common":
+        if canonicalize_name(Requirement(requirement).name) == "SMcommonHA":
             has_common = True
         else:
             drivers.append(requirement)
     if not has_common:
-        raise ValueError(f"{manifests[0]} does not require sequent-ha-common")
+        raise ValueError(f"{manifests[0]} does not require SMcommonHA")
     return drivers
 
 

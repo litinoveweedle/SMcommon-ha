@@ -6,8 +6,8 @@ import pytest
 from homeassistant.exceptions import ConfigEntryError
 from homeassistant.helpers import entity_registry as er
 
-from sequent_ha_common import Card, setup
-from sequent_ha_common.config_support import async_setup_entities
+from SMcommonHA import Card, setup
+from SMcommonHA.config_support import async_setup_entities
 
 
 @pytest.fixture

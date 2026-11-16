@@ -40,7 +40,7 @@ wheel under development. Moving branch heads make results non-reproducible
 unless the checkout commits are recorded. Each card's own CI installs the
 published library from PyPI using its manifest dependency pin.
 
-The integrations pin `sequent-ha-common==0.0.2`. Publish this version to PyPI
+The integrations pin `SMcommonHA>=0.0.2`. Publish this version to PyPI
 before deploying the integrations; otherwise Home Assistant cannot install the
 dependency. Update and test all installed integrations' pins together so they
 can coexist in the same Home Assistant installation.
@@ -73,7 +73,7 @@ The card integration must provide its own `select.py` platform wrapper, as with
 the other platforms:
 
 ```python
-from sequent_ha_common.select import async_setup_entry as shared_setup
+from SMcommonHA.select import async_setup_entry as shared_setup
 from . import CARD
 
 async def async_setup_entry(hass, entry, async_add_entities):
@@ -91,7 +91,7 @@ needed. Before the first release:
 2. Create a GitHub Actions environment named `pypi`. Configure required
    reviewers and deployment restrictions where available.
 3. In [PyPI publishing settings](https://pypi.org/manage/account/publishing/),
-   add a pending publisher for project `sequent-ha-common`, using the actual
+   add a pending publisher for project `SMcommonHA`, using the actual
    GitHub repository owner and name, workflow `publish-to-pypi.yml`, and
    environment `pypi`. If the project already exists, add the publisher in its
    PyPI project settings instead.
