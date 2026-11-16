@@ -19,7 +19,7 @@ def card_requirements(repo: Path) -> list[str]:
     drivers = []
     has_common = False
     for requirement in requirements:
-        if canonicalize_name(Requirement(requirement).name) == "SMcommonHA":
+        if canonicalize_name(Requirement(requirement).name) == "smcommonha":
             has_common = True
         else:
             drivers.append(requirement)

@@ -17,7 +17,7 @@ def test_excludes_shared_library_pin(tmp_path):
     manifest = tmp_path / "custom_components" / "card" / "manifest.json"
     manifest.parent.mkdir(parents=True)
     manifest.write_text(json.dumps({
-        "requirements": ["SomeDriver>=1.0", "Sequent_HA_Common==99.0"],
+        "requirements": ["SomeDriver>=1.0", "SmCommonHA>=99.0"],
     }), encoding="utf-8")
     assert install_card_requirements.card_requirements(tmp_path) == ["SomeDriver>=1.0"]
 

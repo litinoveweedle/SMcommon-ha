@@ -24,7 +24,7 @@ can be used instead.
 With Python 3.14, install the test dependencies and build and install a wheel:
 
 ```sh
-python -m pip install build 'homeassistant==2026.11.1' 'pytest-homeassistant==2026.11.1' 'SMioplus>=1.0.0' 'SMmultiio>=1.0.0'
+python -m pip install build 'homeassistant==2026.11.1' 'pytest-homeassistant==2026.11.1' 'SMioplus>=1.0.6' 'SMmultiio>=1.2.8'
 python -m build --wheel
 python -m pip install --no-deps dist/*.whl
 SMIOPLUS_REPO=/path/to/SMioplus-ha SMMULTIIO_REPO=/path/to/SMmultiio-ha \
