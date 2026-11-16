@@ -32,11 +32,13 @@ SMIOPLUS_REPO=/path/to/SMioplus-ha SMMULTIIO_REPO=/path/to/SMmultiio-ha \
 ```
 
 The coexistence test requires both checkout paths; it is skipped if neither is
-set. Tests simulate hardware and do not require a card. CI builds the wheel and
-tests it against pinned commits of both card integrations, using the tests
-present at those commits. Update these checkout refs when coordinating releases
-or integration changes. Each card's CI installs the published library from
-PyPI using its manifest dependency pin.
+set. Tests simulate hardware and do not require a card. CI builds one wheel and
+tests it against all 16 card integrations at the current `master` heads, as well
+as running the shared and coexistence tests. Card drivers are installed from
+their manifests, but their shared-library pins are excluded so CI tests the
+wheel under development. Moving branch heads make results non-reproducible
+unless the checkout commits are recorded. Each card's own CI installs the
+published library from PyPI using its manifest dependency pin.
 
 The integrations pin `sequent-ha-common==0.0.2`. Publish this version to PyPI
 before deploying the integrations; otherwise Home Assistant cannot install the
