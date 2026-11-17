@@ -1,8 +1,3 @@
-DEFAULT_ICONS = {
-    "on": "mdi:toggle-switch-variant",
-    "off": "mdi:toggle-switch-variant-off",
-}
-
 import inspect
 import logging
 import time
@@ -16,6 +11,11 @@ from homeassistant.helpers.entity import generate_entity_id
 from . import Card
 from .config_support import async_setup_entities
 from .const import CONF_CHAN, CONF_STACK, CONF_TYPE
+
+DEFAULT_ICONS = {
+    "on": "mdi:toggle-switch-variant",
+    "off": "mdi:toggle-switch-variant-off",
+}
 
 _LOGGER = logging.getLogger(__name__)
 

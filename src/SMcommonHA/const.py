@@ -1,6 +1,6 @@
 """Shared card configuration keys."""
 
-from homeassistant.const import CONF_NAME
+from homeassistant.const import CONF_NAME as CONF_NAME
 
 CONF_STACK = "stack"
 CONF_TYPE = "type"

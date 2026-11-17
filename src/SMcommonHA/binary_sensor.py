@@ -1,8 +1,3 @@
-DEFAULT_ICONS = {
-    "on": "mdi:numeric-1",
-    "off": "mdi:numeric-0",
-}
-
 import inspect
 import logging
 import time
@@ -23,6 +18,11 @@ from .const import (
     CONF_TYPE,
     CONF_UPDATE_INTERVAL,
 )
+
+DEFAULT_ICONS = {
+    "on": "mdi:numeric-1",
+    "off": "mdi:numeric-0",
+}
 
 _LOGGER = logging.getLogger(__name__)
 

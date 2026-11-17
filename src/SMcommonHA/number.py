@@ -1,15 +1,8 @@
-DEFAULT_ICONS = {
-    "on": "mdi:numeric",
-    "off": "mdi:numeric-0",
-}
-
 import inspect
 import logging
 import time
 import types
 from inspect import signature
-
-_LOGGER = logging.getLogger(__name__)
 
 from homeassistant.components.number import NumberEntity
 from homeassistant.helpers.entity import generate_entity_id
@@ -23,6 +16,13 @@ from .const import (
     CONF_STACK,
     CONF_TYPE,
 )
+
+DEFAULT_ICONS = {
+    "on": "mdi:numeric",
+    "off": "mdi:numeric-0",
+}
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, entry, async_add_entities, card: Card):

@@ -106,3 +106,8 @@ project name before the first successful upload.
 
 PyPI does not allow replacing an uploaded release file. For a subsequent fix,
 publish a new version and update the integrations' pins together.
+
+## Linting and formatting
+
+CI and the PyPI publishing workflow use Super-Linter to check all Python and
+JSON files.
